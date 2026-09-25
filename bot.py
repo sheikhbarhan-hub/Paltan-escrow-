@@ -1,6 +1,6 @@
 """
-YESH ESCROW SERVICE — aiogram 3.19+ Build
-Token hardcoded. Colored buttons. /start /help /myid /close.
+PALTAN TRANSACTIONS ESCROW BOT — aiogram 3.19+
+Colored buttons. /start /help /myid /close. Startup notify to owners.
 """
 
 import asyncio
@@ -19,11 +19,18 @@ from aiogram.types import (
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-log = logging.getLogger("yesh")
+log = logging.getLogger("paltan")
 
 # ===================== HARDCODED CREDENTIALS =====================
-BOT_TOKEN = "8925443014:AAEB7ksbFqNkTS5r8UCsEtXyTjT27UDbiEc"
-ADMIN_ID  = 7346725373
+BOT_TOKEN   = "8925443014:AAEB7ksbFqNkTS5r8UCsEtXyTjT27UDbiEc"
+BOT_USERNAME = "@PaltanTransactionsBot"
+
+OWNER_ID_1  = 6871199191
+OWNER_ID_2  = 2062068620
+OWNER_USERNAME = "@ZORO_BHAI"
+
+# primary admin (used for /close auth) — owner 1
+ADMIN_ID = OWNER_ID_1
 # ================================================================
 
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
@@ -37,6 +44,10 @@ try:
 except Exception:
     HAS_STYLE = False
 log.info(f"Colored buttons: {HAS_STYLE}")
+
+
+def is_owner(uid: int) -> bool:
+    return uid in (OWNER_ID_1, OWNER_ID_2)
 
 
 # =========================================================
@@ -115,7 +126,7 @@ def main_menu():
 @dp.message(Command("start"))
 async def start(m: Message):
     text = (
-        "🛡️ <b>𝗬𝗘𝗦𝗛 𝗘𝗦𝗖𝗥𝗢𝗪 𝗦𝗘𝗥𝗩𝗜𝗖𝗘</b>\n\n"
+        "🛡️ <b>𝗣𝗔𝗟𝗧𝗔𝗡 𝗧𝗥𝗔𝗡𝗦𝗔𝗖𝗧𝗜𝗢𝗡𝗦 𝗘𝗦𝗖𝗥𝗢𝗪</b>\n\n"
         "Professional escrow deal management bot.\n\n"
         "━━━━━━━━━━━━━━━━━━\n"
         "<b>𝗖𝗢𝗠𝗠𝗔𝗡𝗗𝗦</b>\n\n"
@@ -136,7 +147,7 @@ async def start(m: Message):
 @dp.message(Command("help"))
 async def help_cmd(m: Message):
     text = (
-        "🛡️ <b>𝗬𝗘𝗦𝗛 𝗘𝗦𝗖𝗥𝗢𝗪 𝗦𝗘𝗥𝗩𝗜𝗖𝗘</b>\n\n"
+        "🛡️ <b>𝗣𝗔𝗟𝗧𝗔𝗡 𝗧𝗥𝗔𝗡𝗦𝗔𝗖𝗧𝗜𝗢𝗡𝗦 𝗘𝗦𝗖𝗥𝗢𝗪</b>\n\n"
         "<b>How to close a deal:</b>\n\n"
         "1️⃣ Post the ESCROW DEAL form.\n"
         "2️⃣ Complete the deal.\n"
@@ -162,11 +173,11 @@ async def myid_cmd(m: Message):
 @dp.message(Command("close"))
 async def close_deal(m: Message):
     uid = m.from_user.id
-    if uid != ADMIN_ID:
+    if not is_owner(uid):
         await m.answer(
             "❌ Only an authorized admin can close a deal.\n\n"
             f"Your ID: <code>{uid}</code>\n"
-            f"Admin ID: <code>{ADMIN_ID}</code>"
+            f"Owner: <code>{OWNER_USERNAME}</code>"
         )
         return
 
@@ -231,7 +242,7 @@ async def close_deal(m: Message):
 
 
 # =========================================================
-# CALLBACKS (menu buttons)
+# CALLBACKS
 # =========================================================
 @dp.callback_query()
 async def on_cb(call: CallbackQuery):
@@ -240,7 +251,7 @@ async def on_cb(call: CallbackQuery):
 
     if data == "menu_help":
         text = (
-            "🛡️ <b>𝗬𝗘𝗦𝗛 𝗘𝗦𝗖𝗥𝗢𝗪 𝗦𝗘𝗥𝗩𝗜𝗖𝗘</b>\n\n"
+            "🛡️ <b>𝗣𝗔𝗟𝗧𝗔𝗡 𝗧𝗥𝗔𝗡𝗦𝗔𝗖𝗧𝗜𝗢𝗡𝗦 𝗘𝗦𝗖𝗥𝗢𝗪</b>\n\n"
             "1️⃣ Post the ESCROW DEAL form.\n"
             "2️⃣ Complete the deal.\n"
             "3️⃣ Admin replies to that form.\n"
@@ -255,7 +266,7 @@ async def on_cb(call: CallbackQuery):
         await call.answer()
 
     elif data == "menu_close":
-        if uid != ADMIN_ID:
+        if not is_owner(uid):
             await call.answer("❌ Only admin can close deals.", show_alert=True)
             return
         await call.message.answer(
@@ -266,9 +277,9 @@ async def on_cb(call: CallbackQuery):
 
     elif data == "menu_admin":
         await call.message.answer(
-            f"🛡 Admin ID: <code>{ADMIN_ID}</code>\n"
+            f"🛡 Owner: <code>{OWNER_USERNAME}</code>\n"
             f"Your ID: <code>{uid}</code>\n"
-            f"{'✅ You are admin.' if uid == ADMIN_ID else '❌ You are not admin.'}",
+            f"{'✅ You are admin.' if is_owner(uid) else '❌ You are not admin.'}",
             reply_markup=main_menu(),
         )
         await call.answer()
@@ -278,10 +289,35 @@ async def on_cb(call: CallbackQuery):
 
 
 # =========================================================
+# STARTUP NOTIFICATION
+# =========================================================
+async def startup_notify():
+    msg = (
+        "🤖 <b>PALTAN TRANSACTIONS ESCROW BOT — ONLINE</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        f"🔹 Bot: {BOT_USERNAME}\n"
+        "🔹 Status: 🟢 Active\n"
+        f"🔹 Owner: {OWNER_USERNAME}\n"
+        f"🔹 Colored Buttons: {'✅ ON' if HAS_STYLE else '⚠️ Plain'}\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "Bot has started successfully.\n"
+        "Use /start in your chat to begin."
+    )
+    for oid in (OWNER_ID_1, OWNER_ID_2):
+        try:
+            await bot.send_message(oid, msg)
+            log.info(f"Startup notified owner {oid}")
+        except Exception as e:
+            log.warning(f"[notify {oid}] {e}")
+
+
+# =========================================================
 # MAIN
 # =========================================================
 async def main():
-    log.info("YESH ESCROW SERVICE BOT IS RUNNING...")
+    log.info("Starting Paltan Escrow Bot...")
+    await startup_notify()
+    log.info("Polling...")
     await dp.start_polling(bot)
 
 
