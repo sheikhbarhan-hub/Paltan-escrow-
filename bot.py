@@ -1,15 +1,15 @@
 """
 YESH ESCROW SERVICE — aiogram 3.19+ Build
-Colored inline buttons. Same escrow features: /start /help /myid /close.
+Token hardcoded. Colored buttons. /start /help /myid /close.
 """
 
-import os
+import asyncio
 import re
 import uuid
 import logging
 from html import escape
 
-from aiogram import Bot, Dispatcher, F
+from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
@@ -21,10 +21,10 @@ from aiogram.types import (
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("yesh")
 
-# ===================== CONFIG =====================
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "").strip()
-ADMIN_ID  = 7346725373   # <-- change this to your ID if needed
-# ==================================================
+# ===================== HARDCODED CREDENTIALS =====================
+BOT_TOKEN = "8925443014:AAEB7ksbFqNkTS5r8UCsEtXyTjT27UDbiEc"
+ADMIN_ID  = 7346725373
+# ================================================================
 
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
@@ -281,13 +281,9 @@ async def on_cb(call: CallbackQuery):
 # MAIN
 # =========================================================
 async def main():
-    if not BOT_TOKEN:
-        print("❌ ERROR: BOT_TOKEN is not set. Add it in the Env tab of this deployment, then restart.")
-        return
     log.info("YESH ESCROW SERVICE BOT IS RUNNING...")
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())
